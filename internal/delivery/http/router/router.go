@@ -24,4 +24,5 @@ func (r *Route) Setup() {
 	r.App.Use(r.LogMiddleware)
 	r.App.Post("/Movies", r.MovieHandler.AddNew)
 	r.App.Get("/Movies", r.MovieHandler.List)
+	r.App.Get("/Movies/:ID", r.MovieHandler.Detail)
 }

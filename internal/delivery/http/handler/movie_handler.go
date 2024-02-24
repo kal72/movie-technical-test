@@ -77,3 +77,36 @@ func (h *MovieHandler) List(ctx *fiber.Ctx) error {
 	h.UseCase.Log.FinishRequest(newCtx, ctx.Queries(), resp)
 	return ctx.JSON(resp)
 }
+
+func (h *MovieHandler) Detail(ctx *fiber.Ctx) error {
+	var newCtx = ctx.UserContext()
+	var id int
+	var err error
+	var message, status = "Success", "00"
+
+	h.UseCase.Log.StartRequest(newCtx, ctx.Queries())
+	id, err = strconv.Atoi(ctx.Params("ID"))
+	if err != nil {
+		h.UseCase.Log.Error(newCtx, err)
+		return fiber.NewError(fiber.StatusBadRequest, "invalid parameters")
+	}
+
+	response, err := h.UseCase.Detail(newCtx, id)
+	if err != nil {
+		if err != fiber.ErrNotFound {
+			return err
+		}
+
+		status = "01"
+		message = err.Error()
+	}
+
+	resp := model.Response[*model.MovieResponse]{
+		Status:  status,
+		Data:    response,
+		Message: message,
+	}
+
+	h.UseCase.Log.FinishRequest(newCtx, ctx.Queries(), resp)
+	return ctx.JSON(resp)
+}

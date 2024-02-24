@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"movie-technical-test/internal/entity"
 	"movie-technical-test/internal/model"
 	"movie-technical-test/internal/repository"
 	log "movie-technical-test/internal/utils/logger"
@@ -140,6 +141,62 @@ func TestMovieUseCase_List(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				assert.Equal(t, tc.expectedOutput, responses)
+			}
+		})
+	}
+}
+
+func TestMovieUseCase_Detail(t *testing.T) {
+	// Mock data
+	mockMovie := entity.Movie{
+		ID:          1,
+		Title:       "Test Movie",
+		Description: "Test Description",
+		Rating:      4.5,
+		Image:       "test.jpg",
+	}
+
+	// Setup
+	mockDB, dbmock := DbMock(t)
+	dbmock.MatchExpectationsInOrder(false)
+	dbmock.ExpectQuery("SELECT (.+) FROM movies WHERE id = ?").
+		WithArgs(1).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "title", "description", "rating", "image"}).
+			AddRow(mockMovie.ID, mockMovie.Title, mockMovie.Description, mockMovie.Rating, mockMovie.Image))
+
+	mockLog := log.New(logrus.StandardLogger(), "app-unit-test")
+	mockValidate := validator.New()
+	mockMovieRepo := repository.NewMovieRepository()
+
+	uc := NewMovieUseCase(mockDB, mockLog, mockValidate, mockMovieRepo)
+
+	// Test cases
+	testCases := []struct {
+		name           string
+		id             int
+		expectedError  error
+		expectedOutput *model.MovieResponse
+	}{
+		{
+			name:           "ValidRequest",
+			id:             1,
+			expectedError:  nil,
+			expectedOutput: &model.MovieResponse{ID: 1, Title: "Test Movie", Description: "Test Description", Rating: 4.5, Image: "test.jpg", CreatedAt: "01-01-0001", UpdatedAt: "01-01-0001"},
+		},
+		// Add more test cases as needed
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Invoke the method under test
+			response, err := uc.Detail(context.Background(), tc.id)
+
+			// Assertions
+			if tc.expectedError != nil {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.expectedOutput, response)
 			}
 		})
 	}

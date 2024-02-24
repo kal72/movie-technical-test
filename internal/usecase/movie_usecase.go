@@ -56,6 +56,24 @@ func (u *MovieUseCase) AddNew(ctx context.Context, request model.MovieCreateRequ
 	return response, nil
 }
 
+func (u *MovieUseCase) Detail(ctx context.Context, id int) (*model.MovieResponse, error) {
+	tx := u.DB.WithContext(ctx)
+	var movie entity.Movie
+
+	err := u.MovieRepository.FindByID(tx, &movie, id)
+	if err != nil {
+		u.Log.Error(ctx, err, "failed get detail movie")
+		return nil, fiber.ErrInternalServerError
+	}
+
+	if movie.ID == 0 {
+		return nil, fiber.ErrNotFound
+	}
+
+	response := converter.MovieToResponse(movie)
+	return &response, nil
+}
+
 func (u *MovieUseCase) List(ctx context.Context, page, size int) ([]model.MovieResponse, *model.PageMetadata, error) {
 	tx := u.DB.WithContext(ctx)
 
