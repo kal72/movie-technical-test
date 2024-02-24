@@ -26,4 +26,5 @@ func (r *Route) Setup() {
 	r.App.Get("/Movies", r.MovieHandler.List)
 	r.App.Get("/Movies/:ID", r.MovieHandler.Detail)
 	r.App.Patch("/Movies/:ID", r.MovieHandler.Update)
+	r.App.Delete("/Movies/:ID", r.MovieHandler.Delete)
 }

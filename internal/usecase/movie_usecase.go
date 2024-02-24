@@ -127,3 +127,15 @@ func (u *MovieUseCase) List(ctx context.Context, page, size int) ([]model.MovieR
 	pageMetaData := utils.CalculatePagination(count, size, page)
 	return responses, pageMetaData, nil
 }
+
+func (u *MovieUseCase) Delete(ctx context.Context, id uint) error {
+	tx := u.DB.WithContext(ctx)
+
+	err := u.MovieRepository.Delete(tx, &entity.Movie{ID: id})
+	if err != nil {
+		u.Log.Error(ctx, err, "failed delete movie")
+		return fiber.ErrInternalServerError
+	}
+
+	return nil
+}

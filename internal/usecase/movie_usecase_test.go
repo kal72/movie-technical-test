@@ -242,3 +242,27 @@ func TestMovieUseCase_Update(t *testing.T) {
 	// Assertions
 	assert.NoError(t, err)
 }
+
+func TestMovieUseCase_Delete(t *testing.T) {
+	// Mock data
+	mockID := uint(1)
+	// Setup
+	mockDB, dbmock := DbMock(t)
+	dbmock.MatchExpectationsInOrder(false)
+	dbmock.ExpectBegin()
+	dbmock.ExpectExec("DELETE FROM `movies` WHERE `movies`.`id` = ?").
+		WithArgs(mockID).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	dbmock.ExpectCommit()
+
+	mockLog := log.New(logrus.StandardLogger(), "app-unit-test")
+	mockValidate := validator.New()
+	mockMovieRepo := repository.NewMovieRepository()
+	uc := NewMovieUseCase(mockDB, mockLog, mockValidate, mockMovieRepo)
+
+	// Test the method
+	err := uc.Delete(context.Background(), mockID)
+
+	// Assertions
+	assert.NoError(t, err)
+}
