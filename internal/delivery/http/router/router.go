@@ -1,6 +1,8 @@
 package router
 
 import (
+	"movie-technical-test/internal/delivery/http/handler"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 )
@@ -8,6 +10,7 @@ import (
 type Route struct {
 	App           *fiber.App
 	LogMiddleware fiber.Handler
+	MovieHandler  *handler.MovieHandler
 }
 
 func (r *Route) Setup() {
@@ -18,6 +21,6 @@ func (r *Route) Setup() {
 		})
 	})
 
-	appV1 := r.App.Group("/v1")
-	appV1.Use(r.LogMiddleware)
+	r.App.Use(r.LogMiddleware)
+	r.App.Post("/Movies", r.MovieHandler.AddNew)
 }

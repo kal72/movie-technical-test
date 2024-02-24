@@ -1,8 +1,11 @@
 package config
 
 import (
+	"movie-technical-test/internal/delivery/http/handler"
 	"movie-technical-test/internal/delivery/http/middleware"
 	"movie-technical-test/internal/delivery/http/router"
+	"movie-technical-test/internal/repository"
+	"movie-technical-test/internal/usecase"
 	"movie-technical-test/internal/utils/logger"
 
 	"github.com/go-playground/validator/v10"
@@ -21,10 +24,13 @@ type AppConfig struct {
 
 func Container(config *AppConfig) {
 	// setup repositories
+	movieRepo := repository.NewMovieRepository()
 
 	// setup use cases
+	moviewUseCase := usecase.NewMovieUseCase(config.DB, config.Log, config.Validate, movieRepo)
 
-	// setup controller
+	// setup handler
+	movieHandler := handler.NewMovieHandler(moviewUseCase)
 
 	// setup middleware
 	loggingMiddleware := middleware.HandleReqLogging(config.Log)
@@ -32,6 +38,7 @@ func Container(config *AppConfig) {
 	route := router.Route{
 		App:           config.FiberApp,
 		LogMiddleware: loggingMiddleware,
+		MovieHandler:  movieHandler,
 	}
 	route.Setup()
 }

@@ -1,8 +1,6 @@
 package repository
 
 import (
-	"fmt"
-
 	"gorm.io/gorm"
 )
 
@@ -26,6 +24,6 @@ func (r *Repository[T]) Count(db *gorm.DB) (int64, error) {
 	return total, err
 }
 
-func (r *Repository[T]) FindBy(db *gorm.DB, entity *T, column string, value any) error {
-	return db.Where(fmt.Sprintf("%s = ?", column), value).Take(entity).Error
+func (r *Repository[T]) FindByID(db *gorm.DB, entity *T, value any) error {
+	return db.Where("id = ?", value).Take(entity).Error
 }
