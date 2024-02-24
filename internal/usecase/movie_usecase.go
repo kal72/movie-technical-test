@@ -30,7 +30,7 @@ func NewMovieUseCase(db *gorm.DB, log *logger.Logger, validate *validator.Valida
 	}
 }
 
-func (u *MovieUseCase) AddNew(ctx context.Context, request model.MovieCreateRequest) (fiber.Map, error) {
+func (u *MovieUseCase) AddNew(ctx context.Context, request model.MovieRequest) (fiber.Map, error) {
 	tx := u.DB.WithContext(ctx)
 	var err error
 
@@ -54,6 +54,41 @@ func (u *MovieUseCase) AddNew(ctx context.Context, request model.MovieCreateRequ
 
 	response := fiber.Map{"id": newMovie.ID}
 	return response, nil
+}
+
+func (u *MovieUseCase) Update(ctx context.Context, request model.MovieRequest) error {
+	tx := u.DB.WithContext(ctx)
+	defer tx.Rollback()
+	var err error
+	var movie entity.Movie
+
+	err = u.Validate.Struct(request)
+	if err != nil {
+		return err
+	}
+
+	err = u.MovieRepository.FindByID(tx, &movie, request.ID)
+	if err != nil {
+		u.Log.Error(ctx, err, "failed get detail movie")
+		return fiber.ErrInternalServerError
+	}
+
+	if movie.ID == 0 {
+		return fiber.ErrNotFound
+	}
+
+	movie.Title = request.Title
+	movie.Rating = request.Rating
+	movie.Description = request.Description
+	movie.Image = request.Image
+
+	err = u.MovieRepository.Update(tx, &movie)
+	if err != nil {
+		u.Log.Error(ctx, err, "failed update movie")
+		return fiber.ErrInternalServerError
+	}
+
+	return nil
 }
 
 func (u *MovieUseCase) Detail(ctx context.Context, id int) (*model.MovieResponse, error) {

@@ -20,7 +20,7 @@ func NewMovieHandler(useCase *usecase.MovieUseCase) *MovieHandler {
 
 func (h *MovieHandler) AddNew(ctx *fiber.Ctx) error {
 	var newCtx = ctx.UserContext()
-	var request model.MovieCreateRequest
+	var request model.MovieRequest
 	var err error
 
 	err = ctx.BodyParser(&request)
@@ -39,6 +39,43 @@ func (h *MovieHandler) AddNew(ctx *fiber.Ctx) error {
 		Status:  "00",
 		Data:    response,
 		Message: "Success",
+	}
+	h.UseCase.Log.FinishRequest(newCtx, request, resp)
+	return ctx.JSON(resp)
+}
+
+func (h *MovieHandler) Update(ctx *fiber.Ctx) error {
+	var newCtx = ctx.UserContext()
+	var request model.MovieRequest
+	var err error
+	var message, status = "Success", "00"
+
+	err = ctx.BodyParser(&request)
+	if err != nil {
+		h.UseCase.Log.Error(newCtx, err)
+		return fiber.ErrInternalServerError
+	}
+
+	request.ID, err = strconv.Atoi(ctx.Params("ID"))
+	if err != nil {
+		h.UseCase.Log.Error(newCtx, err)
+		return fiber.NewError(fiber.StatusBadRequest, "invalid parameters")
+	}
+
+	h.UseCase.Log.StartRequest(newCtx, request)
+	err = h.UseCase.Update(newCtx, request)
+	if err != nil {
+		if err != fiber.ErrNotFound {
+			return err
+		}
+
+		status = "01"
+		message = err.Error()
+	}
+
+	resp := model.Response[any]{
+		Status:  status,
+		Message: message,
 	}
 	h.UseCase.Log.FinishRequest(newCtx, request, resp)
 	return ctx.JSON(resp)

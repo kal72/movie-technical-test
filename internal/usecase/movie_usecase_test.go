@@ -57,13 +57,13 @@ func TestMovieUseCase_AddNew(t *testing.T) {
 
 	testCases := []struct {
 		name           string
-		request        model.MovieCreateRequest
+		request        model.MovieRequest
 		expectedError  error
 		expectedOutput fiber.Map
 	}{
 		{
 			name: "ValidRequest",
-			request: model.MovieCreateRequest{
+			request: model.MovieRequest{
 				Title:       "Test Movie",
 				Description: "Test Description",
 				Rating:      5.0,
@@ -159,10 +159,9 @@ func TestMovieUseCase_Detail(t *testing.T) {
 	// Setup
 	mockDB, dbmock := DbMock(t)
 	dbmock.MatchExpectationsInOrder(false)
-	dbmock.ExpectQuery("SELECT (.+) FROM movies WHERE id = ?").
-		WithArgs(1).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "title", "description", "rating", "image"}).
-			AddRow(mockMovie.ID, mockMovie.Title, mockMovie.Description, mockMovie.Rating, mockMovie.Image))
+	dbmock.ExpectQuery("SELECT (.+) FROM `movies` WHERE id = (.+) LIMIT (.+)").
+		WillReturnRows(sqlmock.NewRows([]string{"id", "title", "description", "rating", "image", "created_at", "updated_at"}).
+			AddRow(mockMovie.ID, mockMovie.Title, mockMovie.Description, mockMovie.Rating, mockMovie.Image, nil, nil))
 
 	mockLog := log.New(logrus.StandardLogger(), "app-unit-test")
 	mockValidate := validator.New()
@@ -200,4 +199,46 @@ func TestMovieUseCase_Detail(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestMovieUseCase_Update(t *testing.T) {
+	// Mock data
+	mockMovie := entity.Movie{
+		ID:          1,
+		Title:       "Old Movie Title",
+		Description: "Old Movie Description",
+		Rating:      3.5,
+		Image:       "old_image.jpg",
+	}
+	mockRequest := model.MovieRequest{
+		ID:          1,
+		Title:       "Updated Movie Title",
+		Description: "Updated Movie Description",
+		Rating:      4.7,
+		Image:       "updated_image.jpg",
+	}
+
+	// Setup
+	mockDB, dbmock := DbMock(t)
+	dbmock.MatchExpectationsInOrder(false)
+	rowsAffected := int64(1) // Assuming one row was affected
+	dbmock.ExpectQuery("SELECT (.+) FROM `movies` WHERE id = (.+) LIMIT (.+)").
+		WillReturnRows(sqlmock.NewRows([]string{"id", "title", "description", "rating", "image"}).
+			AddRow(mockMovie.ID, mockMovie.Title, mockMovie.Description, mockMovie.Rating, mockMovie.Image))
+	dbmock.ExpectBegin()
+	dbmock.ExpectExec("UPDATE `movies` SET (.+) WHERE `id` = (.+)").
+		WillReturnResult(sqlmock.NewResult(0, rowsAffected))
+	dbmock.ExpectCommit()
+
+	mockLog := log.New(logrus.StandardLogger(), "app-unit-test")
+	mockValidate := validator.New()
+	mockMovieRepo := repository.NewMovieRepository()
+
+	uc := NewMovieUseCase(mockDB, mockLog, mockValidate, mockMovieRepo)
+
+	// Test the method
+	err := uc.Update(context.Background(), mockRequest)
+
+	// Assertions
+	assert.NoError(t, err)
 }

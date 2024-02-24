@@ -1,6 +1,7 @@
 package model
 
-type MovieCreateRequest struct {
+type MovieRequest struct {
+	ID          int     `json:"-"`
 	Title       string  `json:"title" validate:"required,max=255"`
 	Description string  `json:"description" validate:"required,max=255"`
 	Rating      float32 `json:"rating"`

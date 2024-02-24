@@ -25,4 +25,5 @@ func (r *Route) Setup() {
 	r.App.Post("/Movies", r.MovieHandler.AddNew)
 	r.App.Get("/Movies", r.MovieHandler.List)
 	r.App.Get("/Movies/:ID", r.MovieHandler.Detail)
+	r.App.Patch("/Movies/:ID", r.MovieHandler.Update)
 }
