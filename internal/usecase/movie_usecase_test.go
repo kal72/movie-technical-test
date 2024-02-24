@@ -88,3 +88,59 @@ func TestMovieUseCase_AddNew(t *testing.T) {
 		})
 	}
 }
+
+func TestMovieUseCase_List(t *testing.T) {
+	// Mock data
+	rowsCount := sqlmock.NewRows([]string{"count"}).AddRow(2)
+	rowsData := sqlmock.NewRows([]string{"id", "title", "description", "rating", "image", "created_at", "updated_at"}).
+		AddRow(1, "Movie 1", "Description 1", 4.5, "image1.jpg", nil, nil).
+		AddRow(2, "Movie 2", "Description 2", 3.8, "image2.jpg", nil, nil)
+
+	// Setup
+	mockDB, dbmock := DbMock(t)
+	dbmock.MatchExpectationsInOrder(false)
+	dbmock.ExpectQuery("SELECT count(.+) FROM `movies`").WillReturnRows(rowsCount)
+	dbmock.ExpectQuery("SELECT (.+) FROM `movies`").WillReturnRows(rowsData)
+
+	mockLog := log.New(logrus.StandardLogger(), "app-unit-test")
+	mockValidate := validator.New()
+	mockMovieRepo := repository.NewMovieRepository()
+
+	uc := NewMovieUseCase(mockDB, mockLog, mockValidate, mockMovieRepo)
+
+	// Test cases
+	testCases := []struct {
+		name           string
+		page           int
+		size           int
+		expectedError  error
+		expectedOutput []model.MovieResponse
+	}{
+		{
+			name:          "ValidRequest",
+			page:          1,
+			size:          10,
+			expectedError: nil,
+			expectedOutput: []model.MovieResponse{
+				{ID: 1, Title: "Movie 1", Description: "Description 1", Rating: 4.5, Image: "image1.jpg", CreatedAt: "01-01-0001", UpdatedAt: "01-01-0001"},
+				{ID: 2, Title: "Movie 2", Description: "Description 2", Rating: 3.8, Image: "image2.jpg", CreatedAt: "01-01-0001", UpdatedAt: "01-01-0001"},
+			},
+		},
+		// Add more test cases as needed
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Invoke the method under test
+			responses, _, err := uc.List(context.Background(), tc.page, tc.size)
+
+			// Assertions
+			if tc.expectedError != nil {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.expectedOutput, responses)
+			}
+		})
+	}
+}

@@ -4,7 +4,9 @@ import (
 	"context"
 	"movie-technical-test/internal/entity"
 	"movie-technical-test/internal/model"
+	"movie-technical-test/internal/model/converter"
 	"movie-technical-test/internal/repository"
+	"movie-technical-test/internal/utils"
 	"movie-technical-test/internal/utils/logger"
 
 	"github.com/go-playground/validator/v10"
@@ -52,4 +54,23 @@ func (u *MovieUseCase) AddNew(ctx context.Context, request model.MovieCreateRequ
 
 	response := fiber.Map{"id": newMovie.ID}
 	return response, nil
+}
+
+func (u *MovieUseCase) List(ctx context.Context, page, size int) ([]model.MovieResponse, *model.PageMetadata, error) {
+	tx := u.DB.WithContext(ctx)
+
+	limit, offset := utils.CalculateLimitOffset(page, size)
+	movies, count, err := u.MovieRepository.FindAllByOffsetLimit(tx, offset, limit)
+	if err != nil {
+		u.Log.Error(ctx, err, "failed fetch movies")
+		return nil, nil, fiber.ErrInternalServerError
+	}
+
+	var responses = make([]model.MovieResponse, len(movies))
+	for i, movie := range movies {
+		responses[i] = converter.MovieToResponse(movie)
+	}
+
+	pageMetaData := utils.CalculatePagination(count, size, page)
+	return responses, pageMetaData, nil
 }

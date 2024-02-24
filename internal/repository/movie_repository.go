@@ -14,13 +14,14 @@ func NewMovieRepository() *MovieRepository {
 	return &MovieRepository{}
 }
 
-func (r *MovieRepository) FindAllByOffsetLimit(tx *gorm.DB, offset, limit int) ([]entity.Movie, error) {
+func (r *MovieRepository) FindAllByOffsetLimit(tx *gorm.DB, offset, limit int) ([]entity.Movie, int64, error) {
 	var movies []entity.Movie
+	var count int64
 
-	err := tx.Limit(limit).Offset(offset).Find(&movies).Error
+	err := tx.Model(&entity.Movie{}).Count(&count).Limit(limit).Offset(offset).Find(&movies).Error
 	if err != nil {
-		return nil, err
+		return nil, count, err
 	}
 
-	return movies, nil
+	return movies, count, nil
 }
