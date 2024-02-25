@@ -17,12 +17,17 @@ func NewFiber(config *viper.Viper) *fiber.App {
 func NewErrorHandler() fiber.ErrorHandler {
 	return func(ctx *fiber.Ctx, err error) error {
 		code := fiber.StatusInternalServerError
+		status := "99"
 		if e, ok := err.(*fiber.Error); ok {
 			code = e.Code
+			if code == fiber.StatusBadRequest {
+				status = "04"
+			}
 		}
 
 		return ctx.Status(code).JSON(fiber.Map{
-			"errors": err.Error(),
+			"status":  status,
+			"message": err.Error(),
 		})
 	}
 }

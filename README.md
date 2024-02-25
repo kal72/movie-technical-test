@@ -1,12 +1,12 @@
-# ESB Technical Test
+# Movie Technical Test
 
 ## Description
 
-This is a project built with Golang Clean architecture.
+This is a project built with Golang Clean architecture. This project is an api service for movie management.
 
 ## Tech Stack
 
-- Golang v1.20.13
+- Golang v1.20
 - MySQL (Database) v5.7
 
 ## Framework & Library
@@ -24,25 +24,30 @@ All configuration is in `config.json` file.
 
 ## API Spec
 
-All API collection is in `api` folder.
+All API collection is in `api` folder. Recommended import to Postman.
 
-## Database
+JSON Response status:
+| Status        | Description                   | HTTP Status code|
+| ------------- |:-----------------------------:| --------------- |
+| 99            | Internal server error         | 500             |
+| 00            | Operation success             | 200             |
+| 01            | Data not found in database    | 200             |
+| 04            | request validation error      | 400             |
 
-### Install Mysql v5.7
-
-via docker
-```shell
-docker-compose up -d
-```
 
 ## Database Migration
 
-All database migration is in `db` folder.
+All database sql is in `db` folder. mysql will be installed automatically when using docker compose.
 
 ## Run Application
 
-### Run web server
+### Using docker compose
 
-```bash
-go run cmd/web/main.go
+Go to the project root directory and execute the command below:
+```shell
+docker-compose up -d
+```
+Check application running in browser
+```shell
+http://localhost:8080/ping
 ```

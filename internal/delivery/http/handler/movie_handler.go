@@ -84,19 +84,20 @@ func (h *MovieHandler) Update(ctx *fiber.Ctx) error {
 func (h *MovieHandler) List(ctx *fiber.Ctx) error {
 	var newCtx = ctx.UserContext()
 	var page, size int
+	var status, message = "00", "Success"
 	var err error
 
 	h.UseCase.Log.StartRequest(newCtx, ctx.Queries())
 	page, err = strconv.Atoi(ctx.Query("page"))
 	if err != nil {
 		h.UseCase.Log.Error(newCtx, err)
-		return fiber.NewError(fiber.StatusBadRequest, "'page' cannot empty and must be number!")
+		return fiber.NewError(fiber.StatusBadRequest, "parameter 'page' cannot empty and must be number!")
 	}
 
 	size, err = strconv.Atoi(ctx.Query("size"))
 	if err != nil {
 		h.UseCase.Log.Error(newCtx, err)
-		return fiber.NewError(fiber.StatusBadRequest, "'size' cannot empty and must be number!")
+		return fiber.NewError(fiber.StatusBadRequest, "parameter 'size' cannot empty and must be number!")
 	}
 
 	responses, pageMetaData, err := h.UseCase.List(newCtx, page, size)
@@ -104,11 +105,16 @@ func (h *MovieHandler) List(ctx *fiber.Ctx) error {
 		return err
 	}
 
+	if len(responses) == 0 {
+		status = "01"
+		message = fiber.ErrNotFound.Message
+	}
+
 	resp := model.PageResponse[model.MovieResponse]{
-		Status:       "00",
+		Status:       status,
 		Data:         responses,
 		PageMetadata: pageMetaData,
-		Message:      "Success",
+		Message:      message,
 	}
 
 	h.UseCase.Log.FinishRequest(newCtx, ctx.Queries(), resp)
