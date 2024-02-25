@@ -2,7 +2,7 @@ package utils
 
 import "time"
 
-const DateFormat = "02-01-2006"
+const DateFormat = "2006-01-02 15:04:05"
 
 func ParseDateString(date string) (time.Time, error) {
 	// Parse the date string

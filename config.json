@@ -11,7 +11,7 @@
     "database": {
         "username": "root",
         "password": "root",
-        "host": "localhost",
+        "host": "mysql",
         "port": 3306,
         "name": "movies_db",
         "pool": {
